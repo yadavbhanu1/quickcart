@@ -1,25 +1,50 @@
-'use client'
+'use client';
 import { assets } from "@/assets/assets";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Image from "next/image";
 import { useState } from "react";
+import { useAppContext } from "@/context/AppContext";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 const AddAddress = () => {
+    const { getToken, router } = useAppContext();
 
     const [address, setAddress] = useState({
         fullName: '',
         phoneNumber: '',
-        pincode: '',
+        pinCode: '',
         area: '',
         city: '',
         state: '',
-    })
+    });
 
     const onSubmitHandler = async (e) => {
         e.preventDefault();
 
-    }
+        try {
+            const token = await getToken();
+
+            // Optional: Log the payload to debug
+            console.log("Submitting address:", address);
+
+            const { data } = await axios.post(
+                '/api/user/add-address',
+                { address },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (data.success) {
+                toast.success(data.message);
+                router.push('/cart');
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message || "Something went wrong");
+        }
+    };
 
     return (
         <>
@@ -48,12 +73,11 @@ const AddAddress = () => {
                             className="px-2 py-2.5 focus:border-orange-500 transition border border-gray-500/30 rounded outline-none w-full text-gray-500"
                             type="text"
                             placeholder="Pin code"
-                            onChange={(e) => setAddress({ ...address, pincode: e.target.value })}
-                            value={address.pincode}
+                            onChange={(e) => setAddress({ ...address, pinCode: e.target.value })}
+                            value={address.pinCode}
                         />
                         <textarea
                             className="px-2 py-2.5 focus:border-orange-500 transition border border-gray-500/30 rounded outline-none w-full text-gray-500 resize-none"
-                            type="text"
                             rows={4}
                             placeholder="Address (Area and Street)"
                             onChange={(e) => setAddress({ ...address, area: e.target.value })}
@@ -76,7 +100,10 @@ const AddAddress = () => {
                             />
                         </div>
                     </div>
-                    <button type="submit" className="max-w-sm w-full mt-6 bg-orange-600 text-white py-3 hover:bg-orange-700 uppercase">
+                    <button
+                        type="submit"
+                        className="max-w-sm w-full mt-6 bg-orange-600 text-white py-3 hover:bg-orange-700 uppercase"
+                    >
                         Save address
                     </button>
                 </form>
